@@ -1,1 +1,5 @@
+**/lib
+**/submit.m
+octave-workspace
+sandbox
 **/token.mat
