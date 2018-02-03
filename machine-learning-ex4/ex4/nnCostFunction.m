@@ -16,9 +16,12 @@ function [J grad] = nnCostFunction(nn_params, ...
 
 % Reshape nn_params back into the parameters Theta1 and Theta2, the weight matrices
 % for our 2 layer neural network
+% The Thetas always have 1 extra column because the columns correspond to the nodes and there is the bias node
+% 25 x 401
 Theta1 = reshape(nn_params(1:hidden_layer_size * (input_layer_size + 1)), ...
                  hidden_layer_size, (input_layer_size + 1));
 
+% 10 x 26
 Theta2 = reshape(nn_params((1 + (hidden_layer_size * (input_layer_size + 1))):end), ...
                  num_labels, (hidden_layer_size + 1));
 
@@ -38,10 +41,11 @@ Theta2_grad = zeros(size(Theta2));
 %         variable J. After implementing Part 1, you can verify that your
 %         cost function computation is correct by verifying the cost
 %         computed in ex4.m
-X = [ones(m, 1) X];
-z2 = X * Theta1';
+a1 = [ones(m, 1) X];
+z2 = a1 * Theta1'; % 5000 x 25 matrix
 a2 = sigmoid(z2);
-z3 = [ones(size(a2,1),1) a2] * Theta2';
+a2 = [ones(size(a2,1),1) a2];
+z3 = a2 * Theta2'; % 5000 x 10 matrix
 h = sigmoid(z3); % this is because a3 = h(x)
 % [m, p] = max(a3, [], 2);
 % loop through each sample
@@ -51,9 +55,20 @@ for i = 1:m
     hi = h(i,:);
     mCost = sum(-unrolledY .* log(hi) - (1-unrolledY) .* log(1-hi));
     cost += mCost;
-endfor
 
-J = cost/m;
+    % grad
+    delta3 = (hi - unrolledY)'; % vector of 10 size
+    a2i = a2(i,:)';
+    % remove the 0th column since a2 doesn't have that bias
+    delta2 = (Theta2' * delta3) .* a2i .* (1 - a2i); % vector of 26 size
+    Theta1_grad = Theta1_grad + delta2(2:end) * a1(i,:);
+    Theta2_grad = Theta2_grad + delta3 * a2i';
+endfor
+Theta1_grad = Theta1_grad / m;
+Theta2_grad = Theta2_grad / m;
+% regularized part; note we ignore first column of each Theta as they are for the bias units
+reg = (lambda/(2*m))*(sum(sum(Theta1(:,2:end) .^ 2)) + sum(sum(Theta2(:,2:end) .^ 2)));
+J = cost/m + reg;
 %
 % Part 2: Implement the backpropagation algorithm to compute the gradients
 %         Theta1_grad and Theta2_grad. You should return the partial derivatives of
@@ -77,7 +92,6 @@ J = cost/m;
 %               the regularization separately and then add them to Theta1_grad
 %               and Theta2_grad from Part 2.
 %
-
 
 
 
