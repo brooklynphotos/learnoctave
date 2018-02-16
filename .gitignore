@@ -1,6 +1,7 @@
 **/lib
 **/submit.m
 **/*_abridged.m
+**/*.swp
 octave-workspace
 sandbox
 **/token.mat
